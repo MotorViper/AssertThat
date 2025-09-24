@@ -1,9 +1,7 @@
-﻿using System;
-using System.Linq;
+﻿namespace AssertThatLibrary;
 
-namespace AssertThatLibrary;
-
-internal class CustomChecker(Func<AssertThatParameters, string?> customChecker, Func<List<string>>? checkedNames = null) : IChecker
+internal class CustomChecker(Func<AssertThatParameters, string?> customChecker, Func<List<string>>? checkedNames = null)
+    : IChecker
 {
     public IEnumerable<string> CheckedProperties { get; private set; } = Enumerable.Empty<string>();
 

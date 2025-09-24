@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections;
+using System.Reflection;
 
 namespace AssertThatLibrary;
 
@@ -29,7 +30,7 @@ internal class IsLikeValidator : BaseValidator
                 Parameters.Options.Checkers.GetValueOrDefault(property.Name,
                     Parameters.Options.Checkers.GetValueOrDefault("*", new DefaultChecker())));
 
-            var result = checker.Check(new AssertThatParameters
+            var result = checker!.Check(new AssertThatParameters
             {
                 Actual = property.GetValue(Parameters.Actual),
                 Expected = Parameters.Expected,
@@ -63,6 +64,41 @@ internal class IsLikeValidator : BaseValidator
                 var propertyNames = string.Join(", ", missingProperties);
                 return $"Properties [{propertyNames}] are in {expectedType.Name} but not in {actualType.Name}";
             }
+        }
+
+        return null;
+    }
+
+    public override string? Check(AssertThatParameters parameters)
+    {
+        var actual = parameters.Actual;
+        if (actual is IEnumerable actualValue && parameters.Expected is IEnumerable expectedValue)
+        {
+            var actualList = actualValue.Cast<object>().ToList();
+            var expectedList = expectedValue.Cast<object>().ToList();
+            if (actualList.Count != expectedList.Count)
+                return $"[{actual}] has different number of items than expected";
+            var options = parameters.Options;
+            if (!options.CompareOrder ?? true)
+            {
+                var selectionFunction = options.OrderComparisonFunction ?? (x => x.ToString() ?? string.Empty);
+                actualList = actualList.OrderBy(selectionFunction).ToList();
+                expectedList = expectedList.OrderBy(selectionFunction).ToList();
+            }
+
+            var when = parameters.StopWhen;
+            for (var i = 0; i < actualList.Count; i++)
+            {
+                var listParameters = new AssertThatParameters(actualList[i], expectedList[i], options);
+                var message = Check(listParameters);
+                if ((message != null && when == StopWhen.NotMatch) || (message == null && when == StopWhen.Match))
+                    return message;
+            }
+        }
+        else
+        {
+            Parameters = parameters;
+            return Check();
         }
 
         return null;

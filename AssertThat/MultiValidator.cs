@@ -4,7 +4,10 @@ public class MultiValidator : IChecker
 {
     public List<IChecker> Children { get; } = new();
 
-    public IEnumerable<string> CheckedProperties => Children.SelectMany(x => x.CheckedProperties);
+    public IEnumerable<string> CheckedProperties
+    {
+        get { return Children.SelectMany(x => x.CheckedProperties); }
+    }
 
     public bool FoundMatchableProperty { get; private set; } = true;
 

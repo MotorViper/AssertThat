@@ -10,18 +10,22 @@ public record AssertThatParameters
     {
     }
 
-    public AssertThatParameters(object? actual, object? expected, AssertThatOptions? options = null)
+    public AssertThatParameters(object? actual, object? expected, AssertThatOptions? options = null,
+        StopWhen stopWhen = StopWhen.Match)
     {
         Actual = actual;
         Expected = expected;
         _options = options;
+        StopWhen = stopWhen;
     }
 
     public object? Actual { get; init; }
 
+    public StopWhen StopWhen { get; init; } = StopWhen.Match;
+
     public Type ActualType
     {
-        get => _actualType ??= Actual!.GetType();
+        get { return _actualType ??= Actual!.GetType(); }
         init => _actualType = value;
     }
 
@@ -29,13 +33,13 @@ public record AssertThatParameters
 
     public Type ExpectedType
     {
-        get => _expectedType ??= Expected!.GetType();
+        get { return _expectedType ??= Expected!.GetType(); }
         init => _expectedType = value;
     }
 
     public AssertThatOptions Options
     {
-        get => _options ??= new AssertThatOptions();
+        get { return _options ??= new AssertThatOptions(); }
         init => _options = value;
     }
 

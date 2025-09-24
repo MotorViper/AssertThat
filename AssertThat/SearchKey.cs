@@ -5,30 +5,61 @@ namespace AssertThatLibrary;
 public class SearchKey
 {
     private readonly string _key;
-    private readonly Regex _regex;
 
     public SearchKey(string key)
     {
-        if (key.StartsWith("S:"))
-            _regex = new Regex("^" + Regex.Escape(key.Substring(2)).Replace("\\*", ".*") + "$");
-        else if (key.StartsWith("W:"))
-            _regex = new Regex("^" + Regex.Escape(key.Substring(2)).Replace("\\?", ".").Replace("\\*", ".*") + "$");
-        else if (key.StartsWith("D:"))
-            _regex = new Regex("^" + Regex.Escape(key.Substring(2)).Replace("\\?", ".").Replace("\\*", ".*")
-                .Replace("#", "[0-9]+") + "$");
-        else if (key.StartsWith("R:"))
-            _regex = new Regex(key.Substring(2));
+        _key = key;
+        Regex = null;
+    }
+
+    public SearchKey(Regex key)
+    {
+        _key = "";
+        Regex = key;
+    }
+
+    public Regex? Regex { get; }
+
+    public static SearchKey Create(string key)
+    {
+        if (key == null)
+            throw new SearchKeyException("Search key must not be null");
+
+        char specifier;
+        string actualKey;
+        if (key.Length > 2 && key[1] == ':')
+        {
+            specifier = key[0];
+            actualKey = key[2..];
+        }
         else
-            _key = key;
+        {
+            specifier = 'T';
+            actualKey = key;
+        }
+
+        return specifier switch
+        {
+            'D' => new SearchKey(
+                new Regex(AddEnds(ConvertHash(ConvertStar(ConvertQuestionMark(Regex.Escape(actualKey))))))),
+            'R' => new SearchKey(new Regex(actualKey)),
+            'S' => new SearchKey(new Regex(AddEnds(ConvertStar(Regex.Escape(actualKey))))),
+            'T' => new SearchKey(actualKey),
+            'W' => new SearchKey(new Regex(AddEnds(ConvertStar(ConvertQuestionMark(Regex.Escape(actualKey)))))),
+            _ => throw new SearchKeyException(
+                $"Search key specifier '{specifier}' is invalid, must be one of D, R, S, T or W")
+        };
     }
 
-    public bool Equals(string other)
-    {
-        return _key != null ? _key == other : _regex.IsMatch(other);
-    }
+    private static string AddEnds(string text) => "^" + text + "$";
 
-    public static implicit operator SearchKey(string key)
-    {
-        return new SearchKey(key);
-    }
+    private static string ConvertHash(string text) => text.Replace("\\#", "[0-9]+");
+
+    private static string ConvertQuestionMark(string text) => text.Replace("\\?", ".");
+
+    private static string ConvertStar(string text) => text.Replace("\\*", ".*");
+
+    public bool Equals(string other) => Regex?.IsMatch(other) ?? _key == other;
+
+    public static implicit operator SearchKey(string key) => Create(key);
 }

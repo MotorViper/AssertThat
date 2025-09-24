@@ -4,27 +4,23 @@ namespace AssertThatLibrary;
 
 internal abstract class BaseValidator : BaseChecker, IValidator
 {
-    protected AssertThatParameters Parameters { get; set; } = new AssertThatParameters();
+    protected AssertThatParameters Parameters { get; set; } = new();
 
-    public string CreateMessage()
-    {
-        return CreateMessage(Parameters.PropertyName, Parameters.Actual, Parameters.Expected);
-    }
-
-    public string? Check(AssertThatParameters parameters)
+    public virtual string? Check(AssertThatParameters parameters)
     {
         Parameters = parameters;
         return Check();
     }
 
+    public string CreateMessage() => CreateMessage(Parameters.PropertyName, Parameters.Actual, Parameters.Expected);
+
     protected virtual string? Check() => null;
 
-    protected string FullPropertyName(PropertyInfo property) =>
-        Parameters.PropertyName == null ? property.Name : $"{Parameters.PropertyName}.{property.Name}";
+    protected string FullPropertyName(PropertyInfo property) => Parameters.PropertyName == null
+        ? property.Name
+        : $"{Parameters.PropertyName}.{property.Name}";
 
-    protected IEnumerable<PropertyInfo> GetPropertiesToCheck(PropertyInfo[] properties)
-    {
-        return properties.Where(x => x.CanWrite || Parameters.Options.CheckReadOnly.Contains("*") ||
-            Parameters.Options.CheckReadOnly.Contains(x.Name));
-    }
+    protected IEnumerable<PropertyInfo> GetPropertiesToCheck(PropertyInfo[] properties) =>
+        properties.Where(x => x.CanWrite || Parameters.Options.CheckReadOnly.Contains("*") ||
+                              Parameters.Options.CheckReadOnly.Contains(x.Name));
 }
