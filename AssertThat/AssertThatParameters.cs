@@ -1,0 +1,44 @@
+﻿namespace AssertThatLibrary;
+
+public record AssertThatParameters
+{
+    private Type? _actualType;
+    private Type? _expectedType;
+    private AssertThatOptions? _options;
+
+    public AssertThatParameters()
+    {
+    }
+
+    public AssertThatParameters(object? actual, object? expected, AssertThatOptions? options = null)
+    {
+        Actual = actual;
+        Expected = expected;
+        _options = options;
+    }
+
+    public object? Actual { get; init; }
+
+    public Type ActualType
+    {
+        get => _actualType ??= Actual!.GetType();
+        init => _actualType = value;
+    }
+
+    public object? Expected { get; init; }
+
+    public Type ExpectedType
+    {
+        get => _expectedType ??= Expected!.GetType();
+        init => _expectedType = value;
+    }
+
+    public AssertThatOptions Options
+    {
+        get => _options ??= new AssertThatOptions();
+        init => _options = value;
+    }
+
+    public string? PropertyName { get; init; }
+    public string? FullPropertyName { get; init; }
+}
