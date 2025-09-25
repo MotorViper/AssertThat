@@ -10,8 +10,7 @@ public record AssertThatParameters
     {
     }
 
-    public AssertThatParameters(object? actual, object? expected, AssertThatOptions? options = null,
-        StopWhen stopWhen = StopWhen.Match)
+    public AssertThatParameters(object? actual, object? expected, AssertThatOptions? options, StopWhen stopWhen)
     {
         Actual = actual;
         Expected = expected;

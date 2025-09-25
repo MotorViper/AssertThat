@@ -8,6 +8,4 @@ public record AssertThatOptions
     public bool Exact { get; init; }
     public Direction ReportMissingProperties { get; init; } = Direction.Both;
     public Func<object, string> OrderComparisonFunction { get; init; } = x => x?.ToString() ?? string.Empty;
-
-    public IValidator CreateValidator() => Exact ? new IsValidator() : new IsLikeValidator();
 }

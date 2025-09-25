@@ -32,13 +32,13 @@ internal class AutoConvertChecker : BasePropertyChecker
         if (converter.CanConvertFrom(from.GetType()))
         {
             converted = converter.ConvertFrom(from)!;
-            return new IsValidator().Check(new AssertThatParameters(converted, to)) == null;
+            return new IsValidator().Check(new AssertThatParameters(converted, to, null, StopWhen.Match)) == null;
         }
 
         if (from is IConvertible)
         {
             converted = Convert.ChangeType(from, toType);
-            return new IsValidator().Check(new AssertThatParameters(converted, to)) == null;
+            return new IsValidator().Check(new AssertThatParameters(converted, to, null, StopWhen.Match)) == null;
         }
 
         return null;

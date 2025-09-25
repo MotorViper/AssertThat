@@ -8,7 +8,7 @@ public class IsTests
     [Fact]
     public void TestMatchesInts()
     {
-        AssertThat.TestValue(1).Is(1);
+        AssertThat.TestValue((object)1).Is(1);
     }
 
     [Fact]

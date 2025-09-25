@@ -28,9 +28,12 @@ public class IsLikeTests
     {
         var value = TimeSpan.Zero;
         AssertThat.TestValue(value)
-            .WithIgnoredProperties("W:Day*", "Minutes", "Seconds", "W:Nanosecond*", "W:Total*", "Date",
-                "Kind", "Minute", "Month", "Second", "TimeOfDay", "Year")
+            .WithIgnoredProperties("W:*Da*", "W:Total*", "Kind", "Month", "Year")
+            .WithEquivalentProperty<DateTime>(x => x.Hours, x => x.Hour)
             .WithEquivalentProperties(("Hours", "Hour"),
+                ("Minutes", "Minute"),
+                ("Seconds", "Second"),
+                ("Nanoseconds", "Nanosecond"),
                 ("Microseconds", "Microsecond"),
                 ("Milliseconds", "Millisecond"))
             .IsLike(new DateTime());

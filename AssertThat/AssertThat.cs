@@ -1,5 +1,11 @@
-﻿namespace AssertThatLibrary;
+﻿using System.Linq.Expressions;
 
+namespace AssertThatLibrary;
+
+/// <summary>
+///     Base class for providing assertions.
+/// </summary>
+/// <typeparam name="TActual">The type of the item being checked.</typeparam>
 public class AssertThat<TActual>
 {
     private readonly TActual? _actual;
@@ -10,6 +16,10 @@ public class AssertThat<TActual>
         _actual = actual;
     }
 
+    /// <summary>
+    ///     Checks that the item being checked is of the correct type.
+    /// </summary>
+    /// <typeparam name="TExpected">The type the item should be.</typeparam>
     public void Is<TExpected>()
     {
         if (typeof(TActual) == typeof(TExpected))
@@ -20,8 +30,17 @@ public class AssertThat<TActual>
             throw new AssertThatException($"Test value [{_actual}] is not of type {typeof(TExpected).Name}");
     }
 
+    /// <summary>
+    ///     Checks that the item being checked has the correct value.
+    ///     This will use existing equality checks if they exist.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
     public void Is(TActual? expected) => WithExact(true).IsLike(expected);
 
+    /// <summary>
+    ///     Checks that the item being checked is not of the given type.
+    /// </summary>
+    /// <typeparam name="TExpected">The type the item should not be.</typeparam>
     public void IsNot<TExpected>()
     {
         if (typeof(TActual) == typeof(TExpected))
@@ -34,44 +53,55 @@ public class AssertThat<TActual>
             throw new AssertThatException($"Test value [{_actual}] is of type {typeof(TExpected).Name}");
     }
 
+    /// <summary>
+    ///     Checks that the item being checked does not have the given value.
+    ///     This will use existing equality checks if they exist.
+    /// </summary>
+    /// <param name="notExpected">The value that the item should not have.</param>
     public void IsNot(TActual? notExpected) => WithExact(true).IsNotLike(notExpected);
 
+    /// <summary>
+    ///     Checks that the test item is in a collection.
+    /// </summary>
+    /// <param name="items">The collection of items to check.</param>
     public void IsIn(params TActual[] items)
     {
-        foreach (var item in items)
-        {
-            var checker = _options.CreateValidator();
-            var message = checker.Check(new AssertThatParameters(_actual, item, _options));
-            if (message == null)
-                return;
-        }
-
-        throw new AssertThatException($"[{_actual}] is not in collection");
+        if (items.Select(item => Check(new AssertThatParameters(_actual, item, _options, StopWhen.Match)))
+            .All(message => message != null))
+            throw new AssertThatException($"[{_actual}] is not in collection");
     }
 
+    /// <summary>
+    ///     Checks that the test item is not in a collection.
+    /// </summary>
+    /// <param name="items">The collection of items to check.</param>
     public void IsNotIn(params TActual[] items)
     {
-        foreach (var item in items)
-        {
-            var checker = _options.CreateValidator();
-            var message = checker.Check(new AssertThatParameters(_actual, item, _options));
-            if (message == null)
-                throw new AssertThatException($"[{_actual}] is in list");
-        }
+        if (items.Select(item => Check(new AssertThatParameters(_actual, item, _options, StopWhen.Match)))
+            .Any(message => message == null))
+            throw new AssertThatException($"[{_actual}] is in collection");
     }
 
+    /// <summary>
+    ///     Checks that the item being checked has the correct value.
+    ///     If the actual and expected types are different then properties with the same name are checked.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
     public void IsLike(object? expected)
     {
-        var checker = _options.CreateValidator();
-        var message = checker.Check(new AssertThatParameters(_actual, expected, _options, StopWhen.NotMatch));
+        var message = Check(new AssertThatParameters(_actual, expected, _options, StopWhen.NotMatch));
         if (message != null)
             throw new AssertThatException(message);
     }
 
+    /// <summary>
+    ///     Checks that the item being checked does not have the given value.
+    ///     If the actual and expected types are different then properties with the same name are checked.
+    /// </summary>
+    /// <param name="notExpected">The value that the item should not have.</param>
     public void IsNotLike(object? notExpected)
     {
-        var checker = _options.CreateValidator();
-        var message = checker.Check(new AssertThatParameters(_actual, notExpected, _options));
+        var message = Check(new AssertThatParameters(_actual, notExpected, _options, StopWhen.Match));
         if (message == null)
             throw new AssertThatException("Actual and expected values are the same");
     }
@@ -142,6 +172,20 @@ public class AssertThat<TActual>
     public AssertThat<TActual> WithEquivalentProperty(SearchKey propertyName, string equivalentPropertyName) =>
         WithCustomChecker(propertyName, new EquivalentPropertyChecker(equivalentPropertyName));
 
+    public AssertThat<TActual> WithEquivalentProperty<TExpected>(Expression<Func<TActual, object>> func,
+        Expression<Func<TExpected, object>> equivalentFunc) =>
+        WithEquivalentProperty(GetNameFromExpression(func), GetNameFromExpression(equivalentFunc));
+
+    private string GetNameFromExpression<T>(Expression<Func<T, object>> func)
+    {
+        if (func.Body is MemberExpression expression)
+            return expression.Member.Name;
+
+        var unary = func.Body as UnaryExpression;
+        var operand = unary.Operand as MemberExpression;
+        return operand.Member.Name;
+    }
+
     public AssertThat<TActual> WithEquivalentProperties(Dictionary<SearchKey, string> equivalences)
     {
         foreach (var equivalence in equivalences)
@@ -181,6 +225,18 @@ public class AssertThat<TActual>
     {
         _options = _options with { ReportMissingProperties = direction };
         return this;
+    }
+
+    private IValidator CreateValidator(AssertThatParameters parameters) =>
+        _options.Exact || parameters.ActualType == parameters.ExpectedType
+            ? new IsValidator()
+            : new IsLikeValidator();
+
+    private string? Check(AssertThatParameters parameters)
+    {
+        var checker = CreateValidator(parameters);
+        var message = checker.Check(parameters);
+        return message;
     }
 }
 

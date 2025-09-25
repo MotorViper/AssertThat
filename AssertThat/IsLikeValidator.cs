@@ -89,7 +89,7 @@ internal class IsLikeValidator : BaseValidator
             var when = parameters.StopWhen;
             for (var i = 0; i < actualList.Count; i++)
             {
-                var listParameters = new AssertThatParameters(actualList[i], expectedList[i], options);
+                var listParameters = new AssertThatParameters(actualList[i], expectedList[i], options, StopWhen.Match);
                 var message = Check(listParameters);
                 if ((message != null && when == StopWhen.NotMatch) || (message == null && when == StopWhen.Match))
                     return message;
