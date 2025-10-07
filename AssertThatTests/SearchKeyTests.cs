@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Text.RegularExpressions;
 using AssertThatLibrary;
+using AssertThatLibrary.SearchKeys;
 using JetBrains.Annotations;
 
 namespace AssertThatTests;
@@ -88,6 +89,9 @@ public class SearchKeyTests
             yield return ["W:?", new[] { false, true, false, false, false, false }];
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

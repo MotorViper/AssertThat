@@ -10,17 +10,14 @@ public record AssertThatParameters
     {
     }
 
-    public AssertThatParameters(object? actual, object? expected, AssertThatOptions? options, StopWhen stopWhen)
+    public AssertThatParameters(object? actual, object? expected, AssertThatOptions? options)
     {
         Actual = actual;
         Expected = expected;
         _options = options;
-        StopWhen = stopWhen;
     }
 
     public object? Actual { get; init; }
-
-    public StopWhen StopWhen { get; init; } = StopWhen.Match;
 
     public Type ActualType
     {

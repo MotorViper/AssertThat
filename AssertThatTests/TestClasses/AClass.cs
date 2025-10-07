@@ -1,8 +1,8 @@
 namespace AssertThatTests.TestClasses;
 
-public record AClass
+public record AClass : IAClass
 {
-    public short S { get; init; }
     public long L { get; init; }
     public decimal D { get; init; }
+    public short S { get; init; }
 }

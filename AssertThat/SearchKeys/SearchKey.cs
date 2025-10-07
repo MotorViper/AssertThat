@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace AssertThatLibrary;
+namespace AssertThatLibrary.SearchKeys;
 
 /// <summary>
 ///     Class to allow keyword matching using a given method,
@@ -36,7 +36,10 @@ public class SearchKey : IEquatable<string>
     public Regex? Regex { get; }
 
     /// <inheritdoc />
-    public bool Equals(string? other) => other != null && (Regex?.IsMatch(other) ?? _key == other);
+    public bool Equals(string? other)
+    {
+        return other != null && (Regex?.IsMatch(other) ?? _key == other);
+    }
 
     /// <summary>
     ///     Create a search key. The key can have any of the following formats:
@@ -77,13 +80,25 @@ public class SearchKey : IEquatable<string>
         };
     }
 
-    private static string AddEnds(string text) => "^" + text + "$";
+    private static string AddEnds(string text)
+    {
+        return "^" + text + "$";
+    }
 
-    private static string ConvertHash(string text) => text.Replace("\\#", "[0-9]+");
+    private static string ConvertHash(string text)
+    {
+        return text.Replace("\\#", "[0-9]+");
+    }
 
-    private static string ConvertQuestionMark(string text) => text.Replace("\\?", ".");
+    private static string ConvertQuestionMark(string text)
+    {
+        return text.Replace("\\?", ".");
+    }
 
-    private static string ConvertStar(string text) => text.Replace("\\*", ".*");
+    private static string ConvertStar(string text)
+    {
+        return text.Replace("\\*", ".*");
+    }
 
     /// <summary>
     ///     Allows search keys to automatically be created from strings.
@@ -91,5 +106,8 @@ public class SearchKey : IEquatable<string>
     /// </summary>
     /// <param name="key">The string to convert.</param>
     /// <returns>A search key.</returns>
-    public static implicit operator SearchKey(string key) => Create(key);
+    public static implicit operator SearchKey(string key)
+    {
+        return Create(key);
+    }
 }

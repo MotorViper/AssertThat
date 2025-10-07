@@ -12,6 +12,12 @@ public class IsTests
     }
 
     [Fact]
+    public void TestMatchesIntsWithDoubles()
+    {
+        AssertThat.TestValue(1.0).Is(1);
+    }
+
+    [Fact]
     public void TestMatchesBools()
     {
         AssertThat.TestValue(false).Is(false);
@@ -65,7 +71,7 @@ public class IsTests
     {
         var exception = Assert.Throws<AssertThatException>(() => AssertThat.TestValue(new AClass()).Is(null));
         AssertThat.TestValue(exception.Message)
-            .Is("Actual and expected values are different: [AClass { S = 0, L = 0, D = 0 }] != [null]");
+            .Is("Actual and expected values are different: [AClass { L = 0, D = 0, S = 0 }] != [null]");
     }
 
     [Fact]
@@ -76,6 +82,6 @@ public class IsTests
             Assert.Throws<AssertThatException>(() => AssertThat.TestValue(value).Is(value with { S = 10 }));
         AssertThat.TestValue(exception.Message)
             .Is(
-                "Actual and expected values are different: [AClass { S = 4, L = 2, D = 3 }] != [AClass { S = 10, L = 2, D = 3 }]");
+                "Actual and expected values are different: [AClass { L = 2, D = 3, S = 4 }] != [AClass { L = 2, D = 3, S = 10 }]");
     }
 }
