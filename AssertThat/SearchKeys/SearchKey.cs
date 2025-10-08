@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace AssertThatLibrary.SearchKeys;
@@ -8,7 +9,7 @@ namespace AssertThatLibrary.SearchKeys;
 /// </summary>
 public class SearchKey : IEquatable<string>
 {
-    private readonly string _key;
+    private readonly ISpecifier _specifier;
 
     /// <summary>
     ///     Creates a search key for straight text matching.
@@ -16,8 +17,7 @@ public class SearchKey : IEquatable<string>
     /// <param name="key">The key which cannot be null.</param>
     public SearchKey(string key)
     {
-        _key = key ?? throw new SearchKeyException("Search key must not be null");
-        Regex = null;
+        _specifier = new SearchKeySpecifier(key, (s1, s2) => s1.Equals(s2));
     }
 
     /// <summary>
@@ -26,79 +26,74 @@ public class SearchKey : IEquatable<string>
     /// <param name="key">The regular expression which cannot be null.</param>
     public SearchKey(Regex key)
     {
-        _key = "";
-        Regex = key ?? throw new SearchKeyException("Search key must not be null");
+        _specifier = new RegexSpecifier(key);
+    }
+
+    private SearchKey(ISpecifier specifier)
+    {
+        _specifier = specifier;
     }
 
     /// <summary>
-    ///     The equivalent regular expression, if relevant.
+    ///     The function to create the ISpecifier to use when there is no indicator.
     /// </summary>
-    public Regex? Regex { get; }
+    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+    public static Func<string, ISpecifier> DefaultSpecifier { get; set; } = x => new SearchKeySpecifier(x, (s1, s2) => s1.Equals(s2));
+
+    /// <summary>
+    ///     Functions to create specifiers for each indicator.
+    /// </summary>
+    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+    public static Dictionary<char, Func<string, ISpecifier>> Specifiers { get; } = new()
+    {
+        ['D'] = x => new RegexSpecifier(new Regex(AddEnds(ConvertHash(ConvertStar(ConvertQuestionMark(Regex.Escape(x))))))),
+        ['R'] = x => new RegexSpecifier(new Regex(x)),
+        ['S'] = x => new RegexSpecifier(new Regex(AddEnds(ConvertStar(Regex.Escape(x))))),
+        ['T'] = x => new SearchKeySpecifier(x, (s1, s2) => s1.Equals(s2)),
+        ['W'] = x => new RegexSpecifier(new Regex(AddEnds(ConvertStar(ConvertQuestionMark(Regex.Escape(x))))))
+    };
 
     /// <inheritdoc />
-    public bool Equals(string? other)
-    {
-        return other != null && (Regex?.IsMatch(other) ?? _key == other);
-    }
+    public bool Equals(string? other) => _specifier.Equals(other);
 
     /// <summary>
     ///     Create a search key. The key can have any of the following formats:
-    ///     "xxx" - straight text match
+    ///     "xxx" - straight text match - this can be replaced using the DefaultSpecifier static property.
     ///     "D:xxx" - a numeric wildcard match, '*' = any character, '?' = single character, '#' - numeric character
     ///     "R:xxx" - a regular expression match
     ///     "S:xxx" - a simple wildcard match, '*' = any character
     ///     "T:xxx" - straight text match
     ///     "W:xxx" - a normal wildcard match, '*' = any character, '?' = single character
+    ///     These can be changed using Specifiers static property.
     /// </summary>
     /// <param name="key">The key string.</param>
     /// <returns>The search key.</returns>
     public static SearchKey Create(string key)
     {
-        char specifier;
-        string actualKey;
+        ISpecifier specifier;
         if (key.Length > 2 && key[1] == ':')
         {
-            specifier = key[0];
-            actualKey = key[2..];
+            if (Specifiers.TryGetValue(key[0], out var specifierFunc))
+                specifier = specifierFunc(key[2..]);
+            else
+                throw new SearchKeyException(
+                    $"Search key specifier '{key[0]}' is invalid, must be one of {Specifiers.Keys}");
         }
         else
         {
-            specifier = 'T';
-            actualKey = key;
+            specifier = DefaultSpecifier(key);
         }
 
-        return specifier switch
-        {
-            'D' => new SearchKey(
-                new Regex(AddEnds(ConvertHash(ConvertStar(ConvertQuestionMark(Regex.Escape(actualKey))))))),
-            'R' => new SearchKey(new Regex(actualKey)),
-            'S' => new SearchKey(new Regex(AddEnds(ConvertStar(Regex.Escape(actualKey))))),
-            'T' => new SearchKey(actualKey),
-            'W' => new SearchKey(new Regex(AddEnds(ConvertStar(ConvertQuestionMark(Regex.Escape(actualKey)))))),
-            _ => throw new SearchKeyException(
-                $"Search key specifier '{specifier}' is invalid, must be one of D, R, S, T or W")
-        };
+        return new SearchKey(specifier);
     }
 
-    private static string AddEnds(string text)
-    {
-        return "^" + text + "$";
-    }
+    private static string AddEnds(string text) => "^" + text + "$";
 
-    private static string ConvertHash(string text)
-    {
-        return text.Replace("\\#", "[0-9]+");
-    }
+    private static string ConvertHash(string text) => text.Replace("\\#", "[0-9]+");
 
-    private static string ConvertQuestionMark(string text)
-    {
-        return text.Replace("\\?", ".");
-    }
+    private static string ConvertQuestionMark(string text) => text.Replace("\\?", ".");
 
-    private static string ConvertStar(string text)
-    {
-        return text.Replace("\\*", ".*");
-    }
+    private static string ConvertStar(string text) => text.Replace("\\*", ".*");
 
     /// <summary>
     ///     Allows search keys to automatically be created from strings.
@@ -106,8 +101,5 @@ public class SearchKey : IEquatable<string>
     /// </summary>
     /// <param name="key">The string to convert.</param>
     /// <returns>A search key.</returns>
-    public static implicit operator SearchKey(string key)
-    {
-        return Create(key);
-    }
+    public static implicit operator SearchKey(string key) => Create(key);
 }

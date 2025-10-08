@@ -57,14 +57,6 @@ public class SearchKeyTests
         AssertThat.TestValue(searchKey.Equals("Value12")).Is(matches[3]);
     }
 
-    [Fact]
-    public void CheckRegexp()
-    {
-        var searchKey = SearchKey.Create("D:Value#");
-        AssertThat.TestValue(searchKey.Regex!.ToString()).Is("^Value[0-9]+$");
-        AssertThat.TestValue(searchKey.Equals("Value1")).Is(true);
-    }
-
     private class TestData : IEnumerable<object[]>
     {
         public IEnumerator<object[]> GetEnumerator()
@@ -89,9 +81,6 @@ public class SearchKeyTests
             yield return ["W:?", new[] { false, true, false, false, false, false }];
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
