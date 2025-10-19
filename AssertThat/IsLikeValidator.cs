@@ -22,34 +22,36 @@ internal class IsLikeValidator : BaseValidator
         var expectedType = Parameters.ExpectedType;
         var missingActualProperties = new List<string>();
         var checkedExpectedProperties = new List<string>();
-        foreach (var property in GetPropertiesToCheck(properties))
-        {
-            var newFullPropertyName = FullPropertyName(property);
-            var checker = Parameters.Options.Checkers.GetValueOrDefault(newFullPropertyName,
-                Parameters.Options.Checkers.GetValueOrDefault(property.Name,
-                    Parameters.Options.Checkers.GetValueOrDefault("*", new DefaultChecker())));
-
-            var result = checker!.Check(new AssertThatParameters
+        foreach (var property in properties)
+            if (CheckProperty(property))
             {
-                Actual = property.GetValue(Parameters.Actual),
-                Expected = Parameters.Expected,
-                ExpectedType = expectedType,
-                PropertyName = property.Name,
-                FullPropertyName = newFullPropertyName,
-                Options = Parameters.Options
-            });
-            if (!checker.FoundMatchableProperty)
-                missingActualProperties.Add(property.Name);
-            checkedExpectedProperties.AddRange(checker.CheckedProperties);
-            if (result != null)
-                return result;
-        }
+                var newFullPropertyName = FullPropertyName(property);
+                var checker = Parameters.Options.Checkers.GetValueOrDefault(newFullPropertyName,
+                    Parameters.Options.Checkers.GetValueOrDefault(property.Name,
+                        Parameters.Options.Checkers.GetValueOrDefault("*", new DefaultChecker())));
+
+                var result = checker!.Check(new AssertThatParameters
+                {
+                    Actual = property.GetValue(Parameters.Actual),
+                    Expected = Parameters.Expected,
+                    ExpectedType = expectedType,
+                    PropertyName = property.Name,
+                    FullPropertyName = newFullPropertyName,
+                    Options = Parameters.Options
+                });
+                if (!checker.FoundMatchableProperty)
+                    missingActualProperties.Add(property.Name);
+                checkedExpectedProperties.AddRange(checker.CheckedProperties);
+                if (result != null)
+                    return result;
+            }
+            else
+            {
+                checkedExpectedProperties.Add(property.Name);
+            }
 
         if (Parameters.Options.ReportMissingProperties.HasFlag(Direction.Actual) && missingActualProperties.Count > 0)
-        {
-            var propertyNames = string.Join(", ", missingActualProperties);
-            return $"Properties [{propertyNames}] are in {Parameters.PropertyName} but not in {expectedType.Name}";
-        }
+            return CreateMissingPropertiesMessage(missingActualProperties, actualType, expectedType);
 
         if (Parameters.Options.ReportMissingProperties.HasFlag(Direction.Expected))
         {
@@ -59,13 +61,18 @@ internal class IsLikeValidator : BaseValidator
                 .Where(property => !IsIgnored(property))
                 .ToList();
             if (missingProperties.Count != 0)
-            {
-                var propertyNames = string.Join(", ", missingProperties);
-                return $"Properties [{propertyNames}] are in {expectedType.Name} but not in {actualType.Name}";
-            }
+                return CreateMissingPropertiesMessage(missingProperties, expectedType, actualType);
         }
 
         return null;
+    }
+
+    private static string? CreateMissingPropertiesMessage(List<string> missingProperties, Type inType, Type notInType)
+    {
+        if (missingProperties.Count == 1)
+            return $"Property [{missingProperties[0]}] is in {inType.Name} but not in {notInType.Name}";
+        var propertyNames = string.Join(", ", missingProperties);
+        return $"Properties [{propertyNames}] are in {inType.Name} but not in {notInType.Name}";
     }
 
     private bool IsIgnored(string property)

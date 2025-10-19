@@ -20,7 +20,7 @@ internal abstract class BaseValidator : BaseChecker, IValidator
             var options = parameters.Options;
             if (!options.CompareOrder.GetValueOrDefault(parameters.PropertyName ?? "", true))
             {
-                var selectionFunction = options.OrderComparisonFunction ?? (x => x.ToString() ?? string.Empty);
+                var selectionFunction = options.OrderComparisonFunction;
                 actualList = actualList.OrderBy(selectionFunction).ToList();
                 expectedList = expectedList.OrderBy(selectionFunction).ToList();
             }
@@ -42,26 +42,14 @@ internal abstract class BaseValidator : BaseChecker, IValidator
         return null;
     }
 
-    public string CreateMessage()
-    {
-        return CreateMessage(Parameters.PropertyName, Parameters.Actual, Parameters.Expected);
-    }
+    protected string CreateMessage() => CreateMessage(Parameters.PropertyName, Parameters.Actual, Parameters.Expected);
 
-    protected virtual string? Check()
-    {
-        return null;
-    }
+    protected abstract string? Check();
 
-    protected string FullPropertyName(PropertyInfo property)
-    {
-        return Parameters.PropertyName == null
+    protected string FullPropertyName(PropertyInfo property) =>
+        Parameters.PropertyName == null
             ? property.Name
             : $"{Parameters.PropertyName}.{property.Name}";
-    }
 
-    protected IEnumerable<PropertyInfo> GetPropertiesToCheck(PropertyInfo[] properties)
-    {
-        return properties.Where(x => x.CanWrite || Parameters.Options.CheckReadOnly.Contains("*") ||
-                                     Parameters.Options.CheckReadOnly.Contains(x.Name));
-    }
+    protected bool CheckProperty(PropertyInfo property) => property.CanWrite || Parameters.Options.CheckReadOnly.GetValueOrDefault(property.Name, true);
 }

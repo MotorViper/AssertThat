@@ -1,14 +1,13 @@
-﻿
-namespace AssertThatLibrary;
+﻿namespace AssertThatLibrary;
 
 internal class DefaultChecker : BasePropertyChecker
 {
-    protected override string? CheckNotNull(AssertThatNonNullParameters parameters)
+    protected override string? CheckWhenNotNull(AssertThatNonNullParameters parameters)
     {
         var expectedProperty = parameters.ExpectedType.GetProperty(parameters.PropertyName!);
         FoundMatchableProperty = expectedProperty != null;
         if (!FoundMatchableProperty)
-            return $"{parameters.FullPropertyName}: {parameters.PropertyName} is not in {parameters.ExpectedType.Name}";
+            return null;
 
         var expectedValue = expectedProperty!.GetValue(parameters.Expected, null);
         var newParameters = new AssertThatParameters

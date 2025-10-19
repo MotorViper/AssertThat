@@ -35,6 +35,11 @@ public class SearchKey : IEquatable<string>
     }
 
     /// <summary>
+    ///     Indicates if this is an exact match as opposed to a wildcard match.
+    /// </summary>
+    public bool IsExactMatch => _specifier.IsExactMatch;
+
+    /// <summary>
     ///     The function to create the ISpecifier to use when there is no indicator.
     /// </summary>
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]

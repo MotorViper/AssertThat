@@ -117,40 +117,35 @@ public class AssertThat<TActual>
 
     public AssertThat<TActual> WithAutoConvert() => WithCustomChecker("*", new AutoConvertChecker());
 
-    public AssertThat<TActual> WithAutoConvertFor(SearchKey propertyName) =>
+    public AssertThat<TActual> WithAutoConvert(SearchKey propertyName) =>
         WithCustomChecker(propertyName, new AutoConvertChecker());
 
-    public AssertThat<TActual> WithAutoConvertFor(IEnumerable<string> propertyNames)
+    public AssertThat<TActual> WithAutoConvert(IEnumerable<string> propertyNames)
     {
         foreach (var propertyName in propertyNames)
-            WithAutoConvertFor(propertyName);
+            WithAutoConvert(propertyName);
         return this;
     }
 
-    public AssertThat<TActual> WithAutoConvertFor(params string[] propertyNames) =>
-        WithAutoConvertFor(propertyNames.ToList());
+    public AssertThat<TActual> WithAutoConvert(params string[] propertyNames) =>
+        WithAutoConvert(propertyNames.ToList());
 
-    public AssertThat<TActual> WithCheckReadOnly(string propertyName)
+    /// <summary>
+    ///     Whether to check read-only properties, by default this is false.
+    /// </summary>
+    /// <param name="check">If true all read-only properties are checked.</param>
+    /// <returns>The current object.</returns>
+    public AssertThat<TActual> WithCheckReadOnly(bool check = true) => WithCheckReadOnly("W:*", check);
+
+    /// <summary>
+    ///     Whether to check a property even if it is read-only.
+    /// </summary>
+    /// <param name="propertyName">The property to check.</param>
+    /// <param name="check">If true this read-only properties is checked.</param>
+    /// <returns>The current object.</returns>
+    public AssertThat<TActual> WithCheckReadOnly(SearchKey propertyName, bool check = true)
     {
-        WithDontCheckReadOnly();
-        _options.CheckReadOnly.Add(propertyName);
-        return this;
-    }
-
-    public AssertThat<TActual> WithCheckReadOnly(IEnumerable<string> propertyNames)
-    {
-        foreach (var propertyName in propertyNames)
-            WithCheckReadOnly(propertyName);
-        return this;
-    }
-
-    public AssertThat<TActual> WithCheckReadOnly(params string[] propertyNames) =>
-        WithCheckReadOnly(propertyNames.ToList());
-
-    public AssertThat<TActual> WithDontCheckReadOnly()
-    {
-        if (_options.CheckReadOnly.Contains("*"))
-            _options.CheckReadOnly.Remove("*");
+        _options.CheckReadOnly.Add(propertyName, check);
         return this;
     }
 
@@ -199,13 +194,31 @@ public class AssertThat<TActual>
         Func<AssertThatParameters, string?> checker) =>
         WithCustomChecker(propertyName, new CustomChecker(checker));
 
+    /// <summary>
+    ///     Indicates that two properties on different objects should match when doing an IsLike.
+    /// </summary>
+    /// <param name="propertyName">Name of property on the actual object.</param>
+    /// <param name="equivalentPropertyName">Name of property on the expected object.</param>
+    /// <returns>The current object.</returns>
     public AssertThat<TActual> WithEquivalentProperty(SearchKey propertyName, string equivalentPropertyName) =>
         WithCustomChecker(propertyName, new EquivalentPropertyChecker(equivalentPropertyName));
 
+    /// <summary>
+    ///     Indicates that two properties on different objects should match when doing an IsLike.
+    /// </summary>
+    /// <param name="func">Function returning the actual object's property.</param>
+    /// <param name="equivalentFunc">Function returning the expected object's property.</param>
+    /// <typeparam name="TExpected">The type of the expected property.</typeparam>
+    /// <returns>The current object.</returns>
     public AssertThat<TActual> WithEquivalentProperty<TExpected>(Expression<Func<TActual, object>> func,
         Expression<Func<TExpected, object>> equivalentFunc) =>
         WithEquivalentProperty(GetNameFromExpression(func), GetNameFromExpression(equivalentFunc));
 
+    /// <summary>
+    ///     Indicates that two sets of properties on different objects should match when doing an IsLike.
+    /// </summary>
+    /// <param name="equivalences">The list of equivalent properties.</param>
+    /// <returns>The current object.</returns>
     public AssertThat<TActual> WithEquivalentProperties(Dictionary<SearchKey, string> equivalences)
     {
         foreach (var equivalence in equivalences)
@@ -213,6 +226,11 @@ public class AssertThat<TActual>
         return this;
     }
 
+    /// <summary>
+    ///     Indicates that two sets of properties on different objects should match when doing an IsLike.
+    /// </summary>
+    /// <param name="equivalences">The list of equivalent properties.</param>
+    /// <returns>The current object.</returns>
     public AssertThat<TActual> WithEquivalentProperties(params (SearchKey, string)[] equivalences) =>
         WithEquivalentProperties(equivalences.ToDictionary());
 
@@ -228,9 +246,35 @@ public class AssertThat<TActual>
         return this;
     }
 
+    /// <summary>
+    ///     Indicates that the named property should not be checked.
+    /// </summary>
+    /// <param name="propertyName">The property name.</param>
+    /// <returns>The current object.</returns>
     public AssertThat<TActual> WithIgnoredProperty(SearchKey propertyName) =>
         WithCustomChecker(propertyName, new IgnoredItemChecker());
 
+    /// <summary>
+    ///     Indicates that the given property int the actual object should not be checked.
+    /// </summary>
+    /// <param name="func">Function returning the actual object's property.</param>
+    /// <returns>The current object.</returns>
+    public AssertThat<TActual> WithIgnoredProperty(Expression<Func<TActual, object>> func) =>
+        WithIgnoredProperty(GetNameFromExpression(func));
+
+    /// <summary>
+    ///     Indicates that the given property in the expected object should not be checked.
+    /// </summary>
+    /// <param name="func">Function returning the actual object's property.</param>
+    /// <returns>The current object.</returns>
+    public AssertThat<TActual> WithIgnoredProperty<TExpected>(Expression<Func<TExpected, object>> func) =>
+        WithIgnoredProperty(GetNameFromExpression(func));
+
+    /// <summary>
+    ///     Indicates that the named properties should not be checked.
+    /// </summary>
+    /// <param name="propertyNames">The property names.</param>
+    /// <returns>The current object.</returns>
     public AssertThat<TActual> WithIgnoredProperties(IEnumerable<SearchKey> propertyNames)
     {
         foreach (var propertyName in propertyNames)
@@ -238,6 +282,11 @@ public class AssertThat<TActual>
         return this;
     }
 
+    /// <summary>
+    ///     Indicates that the named properties should not be checked.
+    /// </summary>
+    /// <param name="propertyNames">The property names.</param>
+    /// <returns>The current object.</returns>
     public AssertThat<TActual> WithIgnoredProperties(params SearchKey[] propertyNames) =>
         WithIgnoredProperties(propertyNames.ToList());
 

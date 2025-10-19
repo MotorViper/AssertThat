@@ -20,4 +20,7 @@ public class RegexSpecifier : ISpecifier
 
     /// <inheritdoc />
     public bool Equals(string? other) => _regex.IsMatch(other!);
+
+    /// <inheritdoc />
+    public bool IsExactMatch => false;
 }

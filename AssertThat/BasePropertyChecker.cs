@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace AssertThatLibrary;
+﻿namespace AssertThatLibrary;
 
 public abstract class BasePropertyChecker : BaseChecker, IChecker
 {
@@ -17,7 +14,8 @@ public abstract class BasePropertyChecker : BaseChecker, IChecker
             FoundMatchableProperty = true;
             return matches.Value ? null : CreateMessage(parameters.FullPropertyName, parameters.Actual, parameters.Expected);
         }
-        return CheckNotNull(new AssertThatNonNullParameters
+
+        return CheckWhenNotNull(new AssertThatNonNullParameters
         {
             Actual = parameters.Actual!,
             ActualType = parameters.ActualType,
@@ -25,9 +23,9 @@ public abstract class BasePropertyChecker : BaseChecker, IChecker
             ExpectedType = parameters.ExpectedType,
             FullPropertyName = parameters.FullPropertyName,
             Options = parameters.Options,
-            PropertyName = parameters.PropertyName,
+            PropertyName = parameters.PropertyName
         });
     }
 
-    protected abstract string? CheckNotNull(AssertThatNonNullParameters parameters);
+    protected abstract string? CheckWhenNotNull(AssertThatNonNullParameters parameters);
 }

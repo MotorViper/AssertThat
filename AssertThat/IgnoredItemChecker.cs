@@ -2,7 +2,7 @@
 
 internal class IgnoredItemChecker : IChecker
 {
-    public IEnumerable<string> CheckedProperties { get; private set; } = Enumerable.Empty<string>();
+    public IEnumerable<string> CheckedProperties { get; private set; } = [];
 
     public bool FoundMatchableProperty => true;
 

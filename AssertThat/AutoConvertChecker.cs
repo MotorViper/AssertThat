@@ -4,7 +4,7 @@ namespace AssertThatLibrary;
 
 internal class AutoConvertChecker : BasePropertyChecker
 {
-    protected override string? CheckNotNull(AssertThatNonNullParameters parameters)
+    protected override string? CheckWhenNotNull(AssertThatNonNullParameters parameters)
     {
         var expectedType = parameters.ExpectedType;
         var propertyName = parameters.PropertyName;

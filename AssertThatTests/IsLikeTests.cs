@@ -44,12 +44,13 @@ public class IsLikeTests
     {
         var value = TimeSpan.Zero;
         var exception = Assert.Throws<AssertThatException>(() => AssertThat.TestValue(value)
-            .WithIgnoredProperties("W:Day*", "Minutes", "Seconds", "W:Nanosecond*", "W:Total*", "Date",
+            .WithIgnoredProperties("W:Day*", "Seconds", "W:Nanosecond*", "W:Total*", "Date",
                 "Kind", "Minute", "Month", "Second", "TimeOfDay", "Year")
+            .WithIgnoredProperty(x => x.Minutes)
             .WithEquivalentProperties(("Hours", "Hour"),
                 ("Milliseconds", "Millisecond"))
             .IsLike(new DateTime()));
-        AssertThat.TestValue(exception.Message).Is("Microseconds: Microseconds is not in DateTime");
+        AssertThat.TestValue(exception.Message).Is("Property [Microseconds] is in TimeSpan but not in DateTime");
     }
 
     [Fact]

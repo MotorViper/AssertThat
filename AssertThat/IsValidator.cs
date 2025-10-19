@@ -18,19 +18,21 @@ internal class IsValidator : BaseValidator
         }
 
         var properties = Parameters.ActualType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        foreach (var property in GetPropertiesToCheck(properties))
-        {
-            var actualValue = property.GetValue(Parameters.Actual, null);
-            var expectedValue = property.GetValue(Parameters.Expected, null);
-            var checker = new IsValidator();
-            return checker.Check(new AssertThatParameters
+        foreach (var property in properties)
+            if (CheckProperty(property))
             {
-                Actual = actualValue,
-                Expected = expectedValue,
-                Options = Parameters.Options,
-                PropertyName = FullPropertyName(property)
-            });
-        }
+                var actualValue = property.GetValue(Parameters.Actual, null);
+                var expectedValue = property.GetValue(Parameters.Expected, null);
+                var checker = new IsValidator();
+                return checker.Check(new AssertThatParameters
+                {
+                    Actual = actualValue,
+                    Expected = expectedValue,
+                    Options = Parameters.Options,
+                    PropertyName = FullPropertyName(property)
+                });
+            }
+
         return null;
     }
 }
